@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Google.Play.AssetDelivery;
 #if UNITY_EDITOR	
 using UnityEditor;
 #endif
@@ -14,6 +15,7 @@ public class BaseLoader : MonoBehaviour {
 		yield return StartCoroutine(Initialize() );
 	}
 
+	public static string platformFolderForAssetBundles;
 	// Initialize the downloading url and AssetBundleManifest object.
 	protected IEnumerator Initialize()
 	{
@@ -24,7 +26,7 @@ public class BaseLoader : MonoBehaviour {
 		Debug.Log ("We are " + (AssetBundleManager.SimulateAssetBundleInEditor ? "in Editor simulation mode" : "in normal mode") );
 #endif
 
-		string platformFolderForAssetBundles = 
+		platformFolderForAssetBundles = 
 #if UNITY_EDITOR
 			GetPlatformFolderForAssetBundles(EditorUserBuildSettings.activeBuildTarget);
 #else
@@ -35,18 +37,33 @@ public class BaseLoader : MonoBehaviour {
 		string relativePath = GetRelativePath();
 		AssetBundleManager.BaseDownloadingURL = relativePath + kAssetBundlesPath + platformFolderForAssetBundles + "/";
 
-		// Initialize AssetBundleManifest which loads the AssetBundleManifest object.
-		var request = AssetBundleManager.Initialize(platformFolderForAssetBundles);
-		if (request != null)
-			yield return StartCoroutine(request);
+		
+		//先把包load出来
+		string packName = "AssetBundles";
+		PlayAssetPackRequest playAssetPackRequest = PlayAssetDelivery.RetrieveAssetPackAsync(packName);
+		while (!playAssetPackRequest.IsDone)
+		{
+			yield return null;
+		}
+
+		if (playAssetPackRequest.Error == AssetDeliveryErrorCode.NoError)
+		{
+			// Initialize AssetBundleManifest which loads the AssetBundleManifest object.
+			var request = AssetBundleManager.Initialize(platformFolderForAssetBundles, playAssetPackRequest);
+			if (request != null)
+				yield return StartCoroutine(request);
+		}
+		else
+		{
+			Debug.LogError("PlayAssetPackRequest  init error!!!");
+		}
 	}
 
 	public string GetRelativePath()
 	{
 		if (Application.isEditor)
-			return "file://" +  System.Environment.CurrentDirectory.Replace("\\", "/"); // Use the build output folder directly.
-		else if (Application.isWebPlayer)
-			return System.IO.Path.GetDirectoryName(Application.absoluteURL).Replace("\\", "/")+ "/StreamingAssets";
+			// return "file://" +  System.Environment.CurrentDirectory.Replace("\\", "/"); // Use the build output folder directly.
+			return System.Environment.CurrentDirectory.Replace("\\", "/"); // Use the build output folder directly.
 		else if (Application.isMobilePlatform || Application.isConsolePlatform)
 			return Application.streamingAssetsPath;
 		else // For standalone player.
@@ -62,14 +79,12 @@ public class BaseLoader : MonoBehaviour {
 			return "Android";
 		case BuildTarget.iOS:
 			return "iOS";
-		case BuildTarget.WebPlayer:
-			return "WebPlayer";
 		case BuildTarget.StandaloneWindows:
 		case BuildTarget.StandaloneWindows64:
 			return "Windows";
 		case BuildTarget.StandaloneOSXIntel:
 		case BuildTarget.StandaloneOSXIntel64:
-		case BuildTarget.StandaloneOSXUniversal:
+		case BuildTarget.StandaloneOSX:
 			return "OSX";
 			// Add more build targets for your own.
 			// If you add more targets, don't forget to add the same platforms to GetPlatformFolderForAssetBundles(RuntimePlatform) function.
@@ -87,9 +102,6 @@ public class BaseLoader : MonoBehaviour {
 			return "Android";
 		case RuntimePlatform.IPhonePlayer:
 			return "iOS";
-		case RuntimePlatform.WindowsWebPlayer:
-		case RuntimePlatform.OSXWebPlayer:
-			return "WebPlayer";
 		case RuntimePlatform.WindowsPlayer:
 			return "Windows";
 		case RuntimePlatform.OSXPlayer:

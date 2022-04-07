@@ -4,6 +4,8 @@ using UnityEditor;
 #endif
 using System.Collections;
 using System.Collections.Generic;
+using Google.Play.AssetDelivery;
+using UnityEngine.Networking;
 
 /*
  	In this demo, we demonstrate:
@@ -44,7 +46,9 @@ public class AssetBundleManager : MonoBehaviour
 #endif
 
 	static Dictionary<string, LoadedAssetBundle> m_LoadedAssetBundles = new Dictionary<string, LoadedAssetBundle> ();
-	static Dictionary<string, WWW> m_DownloadingWWWs = new Dictionary<string, WWW> ();
+
+	static Dictionary<string, AssetBundleCreateRequest> m_DownloadingWWWs = new Dictionary<string, AssetBundleCreateRequest> ();
+
 	static Dictionary<string, string> m_DownloadingErrors = new Dictionary<string, string> ();
 	static List<AssetBundleLoadOperation> m_InProgressOperations = new List<AssetBundleLoadOperation> ();
 	static Dictionary<string, string[]> m_Dependencies = new Dictionary<string, string[]> ();
@@ -124,9 +128,12 @@ public class AssetBundleManager : MonoBehaviour
 		return bundle;
 	}
 
+	private static PlayAssetPackRequest AndroidPlayAssetPack;
+
 	// Load AssetBundleManifest.
-	static public AssetBundleLoadManifestOperation Initialize (string manifestAssetBundleName)
+	static public AssetBundleLoadManifestOperation Initialize (string manifestAssetBundleName, PlayAssetPackRequest playAssetPackRequest)
 	{
+		AndroidPlayAssetPack = playAssetPackRequest;
 		var go = new GameObject("AssetBundleManager", typeof(AssetBundleManager));
 		DontDestroyOnLoad(go);
 	
@@ -214,15 +221,36 @@ public class AssetBundleManager : MonoBehaviour
 		if (m_DownloadingWWWs.ContainsKey(assetBundleName) )
 			return true;
 
-		WWW download = null;
+		AssetBundleCreateRequest download = null;
 		string url = m_BaseDownloadingURL + assetBundleName;
-
 		// For manifest assetbundle, always download it as we don't have hash for it.
 		if (isLoadingAssetBundleManifest)
-			download = new WWW(url);
+		{
+#if UNITY_EDITOR
+			download = AssetBundle.LoadFromFileAsync(url);
+#else
+#if UNITY_ANDROID
+			url = BaseLoader.platformFolderForAssetBundles + "/" + assetBundleName;
+			download = AndroidPlayAssetPack.LoadAssetBundleAsync(url);
+#else
+			download = AssetBundle.LoadFromFileAsync(url);
+#endif
+#endif
+		}
 		else
-			download = WWW.LoadFromCacheOrDownload(url, m_AssetBundleManifest.GetAssetBundleHash(assetBundleName), 0); 
+		{
+#if UNITY_EDITOR
+			download = AssetBundle.LoadFromFileAsync(url);
+#else
+#if UNITY_ANDROID
+			url = BaseLoader.platformFolderForAssetBundles + "/" + assetBundleName;
+			download = AndroidPlayAssetPack.LoadAssetBundleAsync(url);
 
+#else
+			download = AssetBundle.LoadFromFileAsync(url);
+#endif
+#endif
+		}
 		m_DownloadingWWWs.Add(assetBundleName, download);
 
 		return false;
@@ -304,19 +332,16 @@ public class AssetBundleManager : MonoBehaviour
 		var keysToRemove = new List<string>();
 		foreach (var keyValue in m_DownloadingWWWs)
 		{
-			WWW download = keyValue.Value;
-
-			// If downloading fails.
-			if (download.error != null)
-			{
-				m_DownloadingErrors.Add(keyValue.Key, download.error);
-				keysToRemove.Add(keyValue.Key);
-				continue;
-			}
-
+			var download = keyValue.Value;
 			// If downloading succeeds.
 			if(download.isDone)
 			{
+				if (download.assetBundle == null)
+				{
+					Debug.LogError($"load fail assetbundle name :{keyValue.Key}");
+					keysToRemove.Add(keyValue.Key);
+					continue;;
+				}
 				//Debug.Log("Downloading " + keyValue.Key + " is done at frame " + Time.frameCount);
 				m_LoadedAssetBundles.Add(keyValue.Key, new LoadedAssetBundle(download.assetBundle) );
 				keysToRemove.Add(keyValue.Key);
@@ -326,9 +351,7 @@ public class AssetBundleManager : MonoBehaviour
 		// Remove the finished WWWs.
 		foreach( var key in keysToRemove)
 		{
-			WWW download = m_DownloadingWWWs[key];
 			m_DownloadingWWWs.Remove(key);
-			download.Dispose();
 		}
 
 		// Update all in progress operations

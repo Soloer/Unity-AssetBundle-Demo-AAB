@@ -1,0 +1,29 @@
+ManifestFileVersion: 0
+CRC: 3232315242
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 1d61521c946d133bfce90d53bcc1a790
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: df7995960c8929c203ef14c7e77bf5e7
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 65
+  Script: {instanceID: 0}
+Assets:
+- Assets/TestAssets/Cube.prefab
+Dependencies:
+- G:/work/Unity-5.0-AssetBundle-Demo-master/Unity-5.0-AssetBundle-Demo-master/demo/AssetBundles/Android/material.unity3d

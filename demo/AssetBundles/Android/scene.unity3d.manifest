@@ -1,0 +1,43 @@
+ManifestFileVersion: 0
+CRC: 2978166352
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: fbd6276286f87d990da97850c189b465
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: b4e6022f4be5a27d4c5b055e92107d48
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 20
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 92
+  Script: {instanceID: 0}
+- Class: 104
+  Script: {instanceID: 0}
+- Class: 124
+  Script: {instanceID: 0}
+- Class: 135
+  Script: {instanceID: 0}
+- Class: 157
+  Script: {instanceID: 0}
+Assets:
+- Assets/TestAssets/testScene.unity
+Dependencies:
+- G:/work/Unity-5.0-AssetBundle-Demo-master/Unity-5.0-AssetBundle-Demo-master/demo/AssetBundles/Android/material.unity3d

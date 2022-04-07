@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System.Collections;
+using Google.Android.AppBundle.Editor;
+using Google.Android.AppBundle.Editor.Internal;
 
 public class AssetbundlesMenuItems
 {
@@ -30,4 +32,27 @@ public class AssetbundlesMenuItems
 	{
 		BuildScript.BuildPlayer();
 	}
+	
+		
+	[MenuItem ("AssetBundles/Build Player By Google")]
+	static void BuildByGoogle ()
+	{
+		BuildPlayerOptions buildPlayerOptions =
+			AndroidBuildHelper.CreateBuildPlayerOptions(Application.dataPath.Replace("/Assets", "/bin/demo.aab"));
+		AssetPackConfig assetPackConfig = new AssetPackConfig
+		{
+			DefaultTextureCompressionFormat  = TextureCompressionFormat.Astc,
+			SplitBaseModuleAssets = false
+		};
+
+		string projectPath = Application.dataPath.Replace("/Assets", "/");
+		string assetBundlePath = projectPath + "AssetBundles";
+		string assetBundlePath2 = projectPath + "AssetBundles2";
+		
+		assetPackConfig.AddAssetsFolder("AssetBundles", assetBundlePath, AssetPackDeliveryMode.InstallTime);
+		// assetPackConfig.AddAssetsFolder("AssetBundles2", assetBundlePath2, AssetPackDeliveryMode.InstallTime);
+		
+		AppBundlePublisher.Build(buildPlayerOptions, assetPackConfig,true);
+	}
+
 }
